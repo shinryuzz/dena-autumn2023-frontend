@@ -33,8 +33,8 @@ const TerminalWrapeer: FC<Props> = ({ id, cols = 80, rows = 24 }) => {
 
       if (ev.key === "Enter") {
         const text: string[] = command.split(" ", 2);
-        const dir = "dir"; // TODO api呼び出しに変更
         if (text[0] === "cd") {
+          const dir = "dir"; // TODO api呼び出しに変更
           if (text[1] !== dir) {
             term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(currentDir + "$ ");
@@ -44,6 +44,26 @@ const TerminalWrapeer: FC<Props> = ({ id, cols = 80, rows = 24 }) => {
           } else {
             term.write(currentDir + "$ ");
           }
+        } else if (text[0] === "ls") {
+          // TODO api呼び出して一覧表示
+        } else if (text[0] === "cat") {
+          const files = "files"; // TODO api呼び出しに変更
+          if (text[1] !== files) {
+            term.write(`\r\ncd: ${text[1]}: No such file or directory`);
+            term.write(currentDir + "$ ");
+          } else if (text[1] === files) {
+            // TODO apiで呼び出した内容を表示
+            term.write(currentDir + "$ ");
+          } else {
+            term.write(currentDir + "$ ");
+          }
+        } else if (text[0] === "help") {
+          term.write("\r\nCommand list");
+          term.write("\r\n");
+          term.write("\r\n cat [file] :open txt or md files.");
+          term.write("\r\n cd [file] :change directory.");
+          term.write("\r\n ls :user list.");
+          term.write(currentDir + "$ ");
         } else if (term.buffer.active.cursorX < 3) {
           term.write(currentDir + "$ ");
         } else {
