@@ -10,5 +10,5 @@ const Terminal = dynamic(
 );
 
 export default function Home() {
-  return <Terminal id="terminal" />;
+  return <Terminal />;
 }
