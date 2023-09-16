@@ -44,6 +44,8 @@ const TerminalWrapeer: FC<Props> = ({ id, cols = 80, rows = 24 }) => {
           } else {
             term.write(currentDir + "$ ");
           }
+        } else if (term.buffer.active.cursorX < 3) {
+          term.write(currentDir + "$ ");
         } else {
           term.write(
             `\r\n${text[0]}: Command not found.  Use 'help' to see the command list.`
