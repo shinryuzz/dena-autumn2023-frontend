@@ -7,6 +7,19 @@ type Props = {
   cols?: number;
 };
 
+const userInfo = [
+  {
+    id: "1234",
+    name: "kakinoki",
+    is_new: true,
+  },
+  {
+    id: "1111",
+    name: "kanta",
+    is_new: true,
+  },
+];
+
 const TerminalWrapeer: FC<Props> = ({ id, cols = 80, rows = 24 }) => {
   // const [command, setCommand] = useState<string>("");
   let command: string = "";
