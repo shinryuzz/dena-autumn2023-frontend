@@ -152,6 +152,16 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
           term.write("\b \b");
           console.log(command);
         }
+      } else if (
+        ev.key === "Delete" ||
+        ev.key === "End" ||
+        ev.key === "Home" ||
+        ev.key === "ArrowDown" ||
+        ev.key === "ArrowLeft" ||
+        ev.key === "ArrowRight" ||
+        ev.key === "ArrowUp"
+      ) {
+        console.log("cannot use key");
       } else if (printable) {
         term.write(e.key);
         command += e.key;
