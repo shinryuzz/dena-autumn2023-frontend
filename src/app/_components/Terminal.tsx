@@ -43,7 +43,7 @@ const TerminalWrapeer: FC<Props> = ({ id, cols = 80, rows = 24 }) => {
     setup();
   }, []);
 
-  return <div id={id} className="bg-darker text-green" />;
+  return <div id={id} className="min-h-screen bg-darker text-green" />;
 };
 
 export default TerminalWrapeer;
