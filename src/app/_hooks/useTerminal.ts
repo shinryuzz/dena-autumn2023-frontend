@@ -169,14 +169,11 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
             if (userIndex !== -1 && currentDir === "\r\nhome ") {
               userName = text[1];
               currentDir = `${currentDir}${text[1]} `;
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
               userName = "";
               currentDir = "\r\nhome ";
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             } else {
               term.write(`\r\ncd: ${text[1]}: No such file or directory`);
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             }
 
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
