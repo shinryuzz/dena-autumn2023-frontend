@@ -207,9 +207,9 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
                 term.write(`\r\n \x1B[96m> ${answer[i].content}\x1B[0m`);
                 term.write("\r\n");
               }
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             };
             asyncCat();
-            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
         } else if (text[0] === "help") {
           term.write("\r\nCommand list");
