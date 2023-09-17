@@ -1,4 +1,5 @@
 import { Terminal } from "xterm";
+import { useSearchParams } from 'next/navigation'
 
 type Props = {
   id: string;
@@ -90,16 +91,62 @@ export const useTerminal = ({
     runTerminal(term);
   };
 
+  const searchParams = useSearchParams();
+
   const runTerminal = (term: Terminal): void => {
     term.write("Break the ice with new team members!");
     term.write("\r\n++++++++++++++++++++++++++++++++++++");
-    term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+
+    let isAnswerMode = false;
+    let isChooseMode = false;
+
+    if (searchParams.get('name') === null) {
+      term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+    } else {
+      term.write(`\r\n${searchParams.get('name')}さんからお題が届いています`);
+      term.write(`\r\n英語で回答してください`);
+      term.write(`\r\nお題: ${searchParams.get('theme')}\r\n`);
+      isAnswerMode = true;
+    }
+
     term.onKey((e: { key: string; domEvent: KeyboardEvent }) => {
       const ev = e.domEvent;
       const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
 
       if (ev.key === "Enter") {
         const text: string[] = command.split(" ", 2);
+
+        if (isAnswerMode) {
+          term.write(`\r\n${searchParams.get('name')}さんの回答: ${command}`);
+          term.write(`\r\n${searchParams.get('name')}さんの回答を送信しました`);
+          //TODO 回答を送信(api)
+          // term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          term.write("\r\n次に回答するユーザーを1人以下から選んでください");
+          term.write("\r\n");
+          userInfo.forEach((value) => {
+            term.write(`\x1B[92m${value.name}\x1B[0m  `);
+          });
+          term.write("\r\n");
+          isAnswerMode = false;
+          isChooseMode = true;
+          command = "";
+          return;
+        }
+
+        if (isChooseMode) {
+          const userIndex = userInfo.findIndex((value) => {
+            return value.name === text[0];
+          });
+          if (userIndex !== -1) {
+            term.write(`\r\n${command}さんにお題を送信しました`);
+            //TODO お題を送信(api)
+          }
+          term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          isChooseMode = false;
+          command = "";
+          return;
+        }
+
         if (text[0] === "cd") {
           // TODO 全ユーザ取得(api) userInfo
           if (!isLoading) {
