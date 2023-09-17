@@ -141,6 +141,23 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
           if (userIndex !== -1) {
             term.write(`\r\n${command}さんにお題を送信しました`);
             //TODO お題を送信(api)
+            const args = {
+              data: {
+                id: "ans_id_2",
+                content: "vim like",
+                user_id: "4",
+                theme_id: "theme_id_2",
+              },
+              headers: { "Content-Type": "application/json" },
+            };
+            axios
+              .post(
+                "https://hooks.slack.com/services/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",
+                args
+              )
+              .then(function (response: any) {
+                console.log(response.data);
+              });
           }
           term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           isChooseMode = false;
