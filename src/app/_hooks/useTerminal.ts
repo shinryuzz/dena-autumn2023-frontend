@@ -141,20 +141,19 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
           if (userIndex !== -1) {
             term.write(`\r\n${command}さんにお題を送信しました`);
             //TODO お題を送信(api)
-            const args = {
-              data: {
-                text: "Hello World!",
-              },
-              headers: { "Content-Type": "application/json" },
-            };
-            axios
-              .post(
-                "https://hooks.slack.com/services/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",
-                args
-              )
-              .then(function (response: any) {
-                console.log(response.data);
-              });
+            // const arg = {
+            //   text: "Hello World!",
+            // }
+            // axios
+            //   .post(
+            //     "https://hooks.slack.com/services/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",
+            //     JSON.stringify(arg)
+            //   ), {
+            //     withCredentials: false,
+            //     transformRequest: [(arg, headers) => {
+            //       delete headers.post["Content-Type"]
+            //       return arg
+            //     }};
           }
           term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           isChooseMode = false;
