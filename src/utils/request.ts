@@ -7,8 +7,8 @@ type PostAnswerParams = {
 };
 
 type NotifySlackParams = {
-  from: number;
-  to: number;
+  from: string;
+  to: string;
   themeId: string;
   themeName: string;
 };
@@ -31,13 +31,9 @@ export const postAnswer = async ({ params }: { params: PostAnswerParams }) => {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const endPoint = "answer";
   await axios.post<AxiosResponse>(baseUrl + endPoint, {
-    // params: {
-    // user_id: params.userName,
-    user_id: "4",
-    // theme_id: params.themId,
-    theme_id: "theme_id_2",
+    user_name: params.userName,
+    theme_id: params.themeId,
     content: params.content,
-    // },
   });
 };
 
@@ -46,14 +42,15 @@ export const notifySlack = async ({
 }: {
   params: NotifySlackParams;
 }) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const baseUrl =
+    "https://hooks.slack.com/services/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/";
   const endPoint = "answer";
   await axios.get<AxiosResponse>(baseUrl + endPoint, {
     params: {
-      from_user_name: 1,
-      theto_user_nameme_id: 1,
+      from_user_name: params.from,
+      to_user_name_id: params.to,
       theme_id: params.themeId,
-      theme_name: "お題1",
+      theme_name: params.themeName,
     },
   });
 };

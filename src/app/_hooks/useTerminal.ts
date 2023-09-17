@@ -76,17 +76,12 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
       const asyncLs = async ({ themeId }: { themeId: string }) => {
         const data: any = await getTheme({ themeId });
         if (currentDir === "\r\nhome ") {
-          term.write("\r\n");
           console.log(data);
           term.write(`\r\nお題: ${data.name}\r\n`);
         } else {
           term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
         }
-        term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
       };
-
-      const theme = searchParams.get("theme_name");
-      term.write(`\r\nお題: ${theme}\r\n`);
 
       asyncLs({ themeId });
 
@@ -135,27 +130,27 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
 
           const postAnswerFn = async (answerParams: any) => {
             answerParams.userName = command;
-            let params = answerParams;
+            answerParams.themeId = searchParams.get("theme_id");
+            const params = answerParams;
 
             await postAnswer({ params });
           };
 
           postAnswerFn(answerParams);
 
-          const notifySlackFn = async (paramsF: any) => {
+          const notifySlackFn = async () => {
             answerParams.userName = command;
-            let params = {
-              from: 1, //
-              to: 2, //
-              themeId: "id1", //
-              themeName: "aaa",
+            const params = {
+              from: searchParams.get("from_user_name")!,
+              to: searchParams.get("to_user_name")!,
+              themeId: searchParams.get("theme_id")!,
+              themeName: searchParams.get("theme_name")!,
             };
 
             await notifySlack({ params });
           };
 
-          let paramsF = "";
-          notifySlackFn(paramsF);
+          notifySlackFn();
 
           isChooseMode = false;
           command = "";
