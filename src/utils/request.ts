@@ -45,9 +45,8 @@ export const notifySlack = async ({
   const baseURL = process.env.NEXT_PUBLIC_SLACK_WEBHOOK_URL as string;
 
   await fetch(
-    // "https://hooks.slack.com/services/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",
-    baseURL,
-    // "https://hooks.slack.com/services/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",
+    // baseURL,
+    "https://hooks.slack.com/services/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",
     {
       method: "post",
       body: JSON.stringify({
