@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from "axios";
 
 export const useGetUser = ({ userId }: { userId: string }) => {
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-  const endPoint = "users/";
+  const endPoint = "user/";
   return useQuery({
     queryKey: ["users", userId],
     queryFn: async () => {
