@@ -7,9 +7,9 @@ import { useGetAllUsers } from "../_hooks/useGetAllUsers";
 
 const TerminalWrapeer: FC = () => {
   const id = "terminal";
-  const { isError, isLoading, data, error } = useGetAllUsers();
+  // const { isError, isLoading, data, error } = useGetAllUsers();
   const { setup } = useTerminal({ id });
-  console.log(data);
+  // console.log(data);
 
   useEffect(() => {
     setup(document);
