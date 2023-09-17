@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import axios, { AxiosResponse } from "axios";
 
-export const useGetUser = ({ userId }: { userId: string }) => {
+export const useGetTheme = ({ themeId }: { themeId: string }) => {
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-  const endPoint = "user/";
+  const endPoint = "theme/";
   return useQuery({
-    queryKey: ["users", userId],
+    queryKey: ["theme", themeId],
     queryFn: async () => {
-      const res = await axios.get<AxiosResponse>(baseURL + endPoint + userId);
+      const res = await axios.get<AxiosResponse>(baseURL + endPoint + themeId);
       return res.data;
     },
   });
