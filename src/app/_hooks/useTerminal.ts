@@ -149,7 +149,7 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
             };
             axios
               .post(
-                "https://hooks.slack.com/services/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",
+                "https://hooks.slack.com/services/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",
                 args
               )
               .then(function (response: any) {
