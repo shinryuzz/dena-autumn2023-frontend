@@ -1,55 +1,17 @@
 import { Terminal } from "xterm";
 import { useSearchParams } from "next/navigation";
-import axios from "axios";
-import { getAllUsers, getTheme, postAnswer } from "@/utils/request";
-import { comma } from "postcss/lib/list";
-import { data } from "autoprefixer";
+import {
+  getAllUsers,
+  getTheme,
+  notifySlack,
+  postAnswer,
+} from "@/utils/request";
 
 type Props = {
   id: string;
   rows?: number;
   cols?: number;
 };
-
-type UserInfo = {
-  id: string;
-  name: string;
-  is_new: true;
-};
-
-const userInfo = [
-  {
-    id: "1000",
-    name: "kakinoki",
-    is_new: true,
-  },
-  {
-    id: "2000",
-    name: "kanta",
-    is_new: true,
-  },
-];
-
-const answer = [
-  {
-    id: "1",
-    answer: "vscode",
-    userId: "1000",
-    themeId: "100",
-  },
-  {
-    id: "2",
-    answer: "C++",
-    userId: "1000",
-    themeId: "200",
-  },
-  {
-    id: "3",
-    answer: "ゲーム、スポーツ観戦",
-    userId: "1000",
-    themeId: "300",
-  },
-];
 
 const theme = [
   {
@@ -101,10 +63,12 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
     let isAnswerMode = false;
     let isChooseMode = false;
 
-    if (searchParams.get("name") === null) {
+    const questioner = searchParams.get("from_user_name");
+
+    if (questioner === null) {
       term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
     } else {
-      term.write(`\r\n${searchParams.get("name")}さんからお題が届いています`);
+      term.write(`\r\n${questioner}さんからお題が届いています`);
       term.write(`\r\n英語で回答してください`);
 
       const asyncLs = async ({ themeId = 1 }: { themeId: number }) => {
@@ -119,12 +83,14 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
       };
 
+      const theme = searchParams.get("theme_name");
+      term.write(`\r\nお題: ${theme}\r\n`);
+
       const themeId = 1;
       // asyncLs({ themeId });
 
       term.write("\r\n");
 
-      term.write(`\r\nお題: ${searchParams.get("theme")}\r\n`);
       isAnswerMode = true;
     }
 
@@ -136,8 +102,9 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         const text: string[] = command.split(" ", 2);
 
         if (isAnswerMode) {
-          term.write(`\r\n${searchParams.get("name")}さんの回答: ${command}`);
-          term.write(`\r\n${searchParams.get("name")}さんの回答を送信しました`);
+          const answerer = searchParams.get("to_user_name");
+          term.write(`\r\n${answerer}さんの回答: ${command}`);
+          term.write(`\r\n${answerer}さんの回答を送信しました`);
 
           answerParams.content = command;
 
@@ -161,20 +128,33 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         }
 
         if (isChooseMode) {
-          const userIndex = userInfo.findIndex((value) => {
-            return value.name === text[0];
-          });
-          if (userIndex !== -1) {
-            term.write(`\r\n${command}さんにお題を送信しました`);
-          }
+          term.write(`\r\n${command}さんにお題を送信しました`);
+
           term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
 
-          answerParams.userName = command;
-          const params = answerParams;
+          const postAnswerFn = async (answerParams: any) => {
+            answerParams.userName = command;
+            let params = answerParams;
 
-          postAnswer({ params });
+            await postAnswer({ params });
+          };
 
-          // TODO: slack 通知のためのリクエスト
+          postAnswerFn(answerParams);
+
+          const notifySlackFn = async (paramsF: any) => {
+            answerParams.userName = command;
+            let params = {
+              from: 1, //
+              to: 2, //
+              themeId: "id1", //
+              themeName: "aaa",
+            };
+
+            await notifySlack({ params });
+          };
+
+          let paramsF = "";
+          notifySlackFn(paramsF);
 
           isChooseMode = false;
           command = "";
