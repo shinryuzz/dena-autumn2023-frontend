@@ -1,5 +1,11 @@
 import { Terminal } from "xterm";
 import { useSearchParams } from "next/navigation";
+import {
+  getAllUsers,
+  getTheme,
+  notifySlack,
+  postAnswer,
+} from "@/utils/request";
 import axios from "axios";
 
 type Props = {
@@ -21,58 +27,15 @@ type AnswerStyle = {
   theme_id: string;
 };
 
-const userInfo = [
-  {
-    id: "1000",
-    name: "kakinoki",
-    is_new: true,
-  },
-  {
-    id: "2000",
-    name: "kanta",
-    is_new: true,
-  },
-];
-
-const answer = [
-  {
-    id: "1",
-    answer: "vscode",
-    userId: "1000",
-    themeId: "100",
-  },
-  {
-    id: "2",
-    answer: "C++",
-    userId: "1000",
-    themeId: "200",
-  },
-  {
-    id: "3",
-    answer: "ゲーム、スポーツ観戦",
-    userId: "1000",
-    themeId: "300",
-  },
-];
-
-const theme = [
-  {
-    id: "100",
-    name: "好きなエディタは？",
-  },
-  {
-    id: "200",
-    name: "好きな言語は？",
-  },
-  {
-    id: "300",
-    name: "趣味は？",
-  },
-];
-
 export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
+
+  let answerParams = {
+    themId: 0,
+    userName: "",
+    content: "",
+  };
   let userName = "";
   let answer: AnswerStyle[];
 
@@ -101,12 +64,29 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
     let isAnswerMode = false;
     let isChooseMode = false;
 
-    if (searchParams.get("name") === null) {
+    const questioner = searchParams.get("from_user_name");
+    const themeId = searchParams?.get("theme_id");
+
+    if (questioner === null || themeId === null) {
       term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
     } else {
-      term.write(`\r\n${searchParams.get("name")}さんからお題が届いています`);
+      term.write(`\r\n${questioner}さんからお題が届いています`);
       term.write(`\r\n英語で回答してください`);
-      term.write(`\r\nお題: ${searchParams.get("theme")}\r\n`);
+
+      const asyncLs = async ({ themeId }: { themeId: string }) => {
+        const data: any = await getTheme({ themeId });
+        if (currentDir === "\r\nhome ") {
+          console.log(data);
+          term.write(`\r\nお題: ${data.name}\r\n`);
+        } else {
+          term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
+        }
+      };
+
+      asyncLs({ themeId });
+
+      term.write("\r\n");
+
       isAnswerMode = true;
     }
 
@@ -118,15 +98,24 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         const text: string[] = command.split(" ", 2);
 
         if (isAnswerMode) {
-          term.write(`\r\n${searchParams.get("name")}さんの回答: ${command}`);
-          term.write(`\r\n${searchParams.get("name")}さんの回答を送信しました`);
-          //TODO 回答を送信(api)
-          // term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          const answerer = searchParams.get("to_user_name");
+          term.write(`\r\n${answerer}さんの回答: ${command}`);
+          term.write(`\r\n${answerer}さんの回答を送信しました`);
+
+          answerParams.content = command;
+
           term.write("\r\n次に回答するユーザーを1人以下から選んでください");
+
+          const asyncLs = async () => {
+            const data: any = await getAllUsers();
+            data.forEach((data: any) => {
+              term.write(`\x1B[92m${data.name}\x1B[0m  `);
+            });
+          };
+
+          asyncLs();
           term.write("\r\n");
-          userInfo.forEach((value) => {
-            term.write(`\x1B[92m${value.name}\x1B[0m  `);
-          });
+
           term.write("\r\n");
           isAnswerMode = false;
           isChooseMode = true;
@@ -135,14 +124,34 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         }
 
         if (isChooseMode) {
-          const userIndex = userInfo.findIndex((value) => {
-            return value.name === text[0];
-          });
-          if (userIndex !== -1) {
-            term.write(`\r\n${command}さんにお題を送信しました`);
-            //TODO お題を送信(api)
-          }
+          term.write(`\r\n${command}さんにお題を送信しました`);
+
           term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+
+          const postAnswerFn = async (answerParams: any) => {
+            answerParams.userName = command;
+            answerParams.themeId = searchParams.get("theme_id");
+            const params = answerParams;
+
+            await postAnswer({ params });
+          };
+
+          postAnswerFn(answerParams);
+
+          const notifySlackFn = async () => {
+            answerParams.userName = command;
+            const params = {
+              from: searchParams.get("from_user_name")!,
+              to: searchParams.get("to_user_name")!,
+              themeId: searchParams.get("theme_id")!,
+              themeName: searchParams.get("theme_name")!,
+            };
+
+            await notifySlack({ params });
+          };
+
+          notifySlackFn();
+
           isChooseMode = false;
           command = "";
           return;
@@ -169,6 +178,7 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
               term.write(`\r\ncd: ${text[1]}: No such file or directory`);
               term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             }
+
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           };
           asyncLs();
