@@ -143,10 +143,7 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
             //TODO お題を送信(api)
             const args = {
               data: {
-                id: "ans_id_2",
-                content: "vim like",
-                user_id: "4",
-                theme_id: "theme_id_2",
+                text: "Hello World!",
               },
               headers: { "Content-Type": "application/json" },
             };
