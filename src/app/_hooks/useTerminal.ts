@@ -70,7 +70,7 @@ const theme = [
   },
 ];
 
-export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
+export const useTerminal = ({ id, cols = 80, rows = 100 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
   let userName = "";
@@ -160,14 +160,11 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
             if (userIndex !== -1 && currentDir === "\r\nhome ") {
               userName = text[1];
               currentDir = `${currentDir}${text[1]} `;
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
               userName = "";
               currentDir = "\r\nhome ";
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             } else {
               term.write(`\r\ncd: ${text[1]}: No such file or directory`);
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             }
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           };
@@ -207,9 +204,9 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
                 term.write(`\r\n \x1B[96m> ${answer[i].content}\x1B[0m`);
                 term.write("\r\n");
               }
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             };
             asyncCat();
-            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
         } else if (text[0] === "help") {
           term.write("\r\nCommand list");
