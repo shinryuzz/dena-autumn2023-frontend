@@ -16,7 +16,7 @@ type UserInfo = {
 
 type AnswerStyle = {
   id: string;
-  answer: string;
+  content: string;
   user_id: string;
   theme_id: string;
 };
@@ -190,31 +190,25 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
           };
           asyncLs();
         } else if (text[0] === "cat") {
-          // TODO あるユーザの回答を取得(api) userNameで指定
-          const asyncLs = async () => {
-            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-            const endPoint = `answers?user_name=${userName}`;
-            const res = await axios.get(baseURL + endPoint);
-            answer = res.data;
-          };
-          asyncLs();
           if (text[1] !== "introduction.md" || currentDir === "\r\nhome ") {
             term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           } else {
-            for (let i = 0; i < answer.length; i++) {
-              // TODO answer[i].themeIdからお題を取得(api)
-              const asyncLs = async () => {
-                const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-                const endPoint = `answers/${answer[i].theme_id}`;
+            const asyncCat = async () => {
+              const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+              const endPoint = `answers?user_name=${userName}`;
+              const res = await axios.get(baseURL + endPoint);
+              answer = res.data;
+              for (let i = 0; i < answer.length; i++) {
+                const endPoint = `theme/${answer[i].theme_id}`;
                 const res = await axios.get(baseURL + endPoint);
                 const theme = res.data;
-                term.write(`\r\n \x1B[96m${theme[i].name}\x1B[0m`);
-                term.write(`\r\n \x1B[96m> ${answer[i].answer}\x1B[0m`);
+                term.write(`\r\n \x1B[96m${theme.name}\x1B[0m`);
+                term.write(`\r\n \x1B[96m> ${answer[i].content}\x1B[0m`);
                 term.write("\r\n");
-              };
-              asyncLs();
-            }
+              }
+            };
+            asyncCat();
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
         } else if (text[0] === "help") {
