@@ -27,7 +27,7 @@ type AnswerStyle = {
   theme_id: string;
 };
 
-export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
+export const useTerminal = ({ id, cols = 120, rows = 180 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
 
@@ -146,7 +146,6 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
               themeId: searchParams.get("theme_id")!,
               themeName: searchParams.get("theme_name")!,
             };
-
             await notifySlack({ params });
           };
 
