@@ -7,7 +7,7 @@ export const useGetAllUsers = () => {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const res = await axios.get<AxiosResponse>(baseURL + endPoint);
+      const res = await axios.get<AxiosResponse<User[]>>(baseURL + endPoint);
       return res.data;
     },
   });
