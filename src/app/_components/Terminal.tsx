@@ -2,12 +2,13 @@
 
 import { FC, useEffect } from "react";
 import { useTerminal } from "../_hooks/useTerminal";
+
 import { useGetAllUsers } from "../_hooks/useGetAllUsers";
 
 const TerminalWrapeer: FC = () => {
   const id = "terminal";
-  const { setup } = useTerminal({ id });
   const { isError, isLoading, data, error } = useGetAllUsers();
+  const { setup } = useTerminal({ id, isLoading, data });
   console.log(data);
 
   useEffect(() => {

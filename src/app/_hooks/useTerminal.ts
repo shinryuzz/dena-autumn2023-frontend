@@ -2,8 +2,16 @@ import { Terminal } from "xterm";
 
 type Props = {
   id: string;
+  isLoading: boolean;
+  data: UserInfo[] | undefined;
   rows?: number;
   cols?: number;
+};
+
+type UserInfo = {
+  id: string;
+  name: string;
+  is_new: true;
 };
 
 const userInfo = [
@@ -55,7 +63,13 @@ const theme = [
   },
 ];
 
-export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
+export const useTerminal = ({
+  id,
+  isLoading,
+  data,
+  cols = 80,
+  rows = 50,
+}: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
   let userName = "";
@@ -88,30 +102,36 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         const text: string[] = command.split(" ", 2);
         if (text[0] === "cd") {
           // TODO 全ユーザ取得(api) userInfo
-          const userIndex = userInfo.findIndex((value) => {
-            return value.name === text[1];
-          });
-          if (userIndex !== -1 && currentDir === "\r\nhome ") {
-            userName = text[1];
-            currentDir = `${currentDir}${text[1]} `;
-            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-          } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
-            userName = "";
-            currentDir = "\r\nhome ";
-            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          if (!isLoading) {
+            const userIndex = data!.findIndex((value) => {
+              return value?.name === text[1];
+            });
+            if (userIndex !== -1 && currentDir === "\r\nhome ") {
+              userName = text[1];
+              currentDir = `${currentDir}${text[1]} `;
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
+              userName = "";
+              currentDir = "\r\nhome ";
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            } else {
+              term.write(`\r\ncd: ${text[1]}: No such file or directory`);
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            }
           } else {
-            term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
         } else if (text[0] === "ls") {
           // TODO 全ユーザ取得(api) userInfo
-          if (currentDir === "\r\nhome ") {
-            term.write("\r\n");
-            userInfo.forEach((value) => {
-              term.write(`\x1B[92m${value.name}\x1B[0m  `);
-            });
-          } else {
-            term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
+          if (!isLoading) {
+            if (currentDir === "\r\nhome ") {
+              term.write("\r\n");
+              data!.forEach((value) => {
+                term.write(`\x1B[92m${value?.name}\x1B[0m  `);
+              });
+            } else {
+              term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
+            }
           }
           term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
         } else if (text[0] === "cat") {
@@ -152,6 +172,16 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
           term.write("\b \b");
           console.log(command);
         }
+      } else if (
+        ev.key === "Delete" ||
+        ev.key === "End" ||
+        ev.key === "Home" ||
+        ev.key === "ArrowDown" ||
+        ev.key === "ArrowLeft" ||
+        ev.key === "ArrowRight" ||
+        ev.key === "ArrowUp"
+      ) {
+        console.log("cannot use key");
       } else if (printable) {
         term.write(e.key);
         command += e.key;
