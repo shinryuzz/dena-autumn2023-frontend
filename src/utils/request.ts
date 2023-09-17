@@ -42,15 +42,27 @@ export const notifySlack = async ({
 }: {
   params: NotifySlackParams;
 }) => {
-  const baseUrl =
-    "https://hooks.slack.com/services/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/";
-  const endPoint = "answer";
-  await axios.get<AxiosResponse>(baseUrl + endPoint, {
-    params: {
-      from_user_name: params.from,
-      to_user_name_id: params.to,
-      theme_id: params.themeId,
-      theme_name: params.themeName,
-    },
+  await fetch(
+    // "https://hooks.slack.com/services/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",
+    "https://hooks.slack.com/services/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",
+    {
+      method: "post",
+      body: JSON.stringify({
+        text:
+          `${
+            "https://dena-autumn2023-frontend.vercel.app/" +
+            "?from_user_name=" +
+            params.from +
+            "&to_user_name=" +
+            params.to
+          }` +
+          "&theme_id=" +
+          params.themeId +
+          "&theme_name=" +
+          params.themeName,
+      }),
+    }
+  ).then((x) => {
+    console.log(x);
   });
 };
