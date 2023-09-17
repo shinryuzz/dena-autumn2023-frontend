@@ -14,5 +14,6 @@ export const useGetAnswerWUserId = ({ userId }: { userId: string }) => {
       });
       return res.data;
     },
+    enabled: userId !== undefined,
   });
 };

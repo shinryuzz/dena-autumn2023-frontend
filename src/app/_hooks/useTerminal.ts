@@ -1,9 +1,12 @@
 import { Terminal } from "xterm";
+import { useGetAllUsers } from "./useGetAllUsers";
+import { useGetAnswerWUserName } from "./useGetAnswerWUserName";
+import axios from "axios";
 
 type Props = {
   id: string;
+  usersData: UserInfo[];
   isLoading: boolean;
-  data: UserInfo[] | undefined;
   rows?: number;
   cols?: number;
 };
@@ -63,16 +66,12 @@ const theme = [
   },
 ];
 
-export const useTerminal = ({
-  id,
-  isLoading,
-  data,
-  cols = 80,
-  rows = 50,
-}: Props) => {
+export const useTerminal = ({ id, usersData, cols = 80, rows = 50 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
   let userName = "";
+  let users = undefined;
+  let sendUserName: string | undefined = undefined;
 
   const createTerminal = (
     document: Document,
@@ -90,10 +89,18 @@ export const useTerminal = ({
     runTerminal(term);
   };
 
-  const runTerminal = (term: Terminal): void => {
-    term.write("Break the ice with new team members!");
+  const initTerminal = (term: Terminal) => {
+    term.write("Break the ice with new team members!", () => {
+      console.log("hello");
+    });
     term.write("\r\n++++++++++++++++++++++++++++++++++++");
     term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+  };
+
+  const updateTerminal = (term: Terminal, usersData: any) => {
+    console.log("updateTerm", usersData);
+    // これが1回しか呼ばれてない
+
     term.onKey((e: { key: string; domEvent: KeyboardEvent }) => {
       const ev = e.domEvent;
       const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
@@ -102,45 +109,49 @@ export const useTerminal = ({
         const text: string[] = command.split(" ", 2);
         if (text[0] === "cd") {
           // TODO 全ユーザ取得(api) userInfo
-          if (!isLoading) {
-            const userIndex = data!.findIndex((value) => {
-              return value?.name === text[1];
-            });
-            if (userIndex !== -1 && currentDir === "\r\nhome ") {
-              userName = text[1];
-              currentDir = `${currentDir}${text[1]} `;
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
-              userName = "";
-              currentDir = "\r\nhome ";
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            } else {
-              term.write(`\r\ncd: ${text[1]}: No such file or directory`);
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            }
+
+          const userIndex = usersData?.findIndex((user: UserInfo) => {
+            return user?.name === text[1];
+          });
+
+          if (userIndex !== -1 && currentDir === "\r\nhome ") {
+            userName = text[1];
+            currentDir = `${currentDir}${text[1]} `;
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
+            userName = "";
+            currentDir = "\r\nhome ";
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           } else {
+            term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
         } else if (text[0] === "ls") {
-          // TODO 全ユーザ取得(api) userInfo
-          if (!isLoading) {
+          const asyncLs = async () => {
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+            const endPoint = "users";
+            const res = await axios.get(baseURL + endPoint);
+            const data = res.data;
             if (currentDir === "\r\nhome ") {
               term.write("\r\n");
-              data!.forEach((value) => {
-                term.write(`\x1B[92m${value?.name}\x1B[0m  `);
+              data?.forEach((value: any) => {
+                term.write(`\x1B[92m${value?.Name}\x1B[0m  `);
               });
             } else {
               term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
             }
-          }
-          term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          };
+          asyncLs();
         } else if (text[0] === "cat") {
           // TODO あるユーザの回答を取得(api) userNameで指定
           // TODO 回答毎にお題を取得(複数回 api)
+
           if (text[1] !== "introduction.md" || currentDir === "\r\nhome ") {
             term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           } else {
+            sendUserName = "shinryuzz";
             for (let i = 0; i < answer.length; i++) {
               // TODO answer[i].themeIdからお題を取得(api)
               term.write(`\r\n \x1B[96m${theme[i].name}\x1B[0m`);
@@ -148,6 +159,7 @@ export const useTerminal = ({
               term.write("\r\n");
             }
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            sendUserName = undefined;
           }
         } else if (text[0] === "help") {
           term.write("\r\nCommand list");
@@ -188,6 +200,12 @@ export const useTerminal = ({
         console.log(command);
       }
     });
+  };
+
+  const runTerminal = (term: Terminal): void => {
+    initTerminal(term);
+    updateTerminal(term, usersData);
+    term.refresh;
   };
 
   return { setup, createTerminal, runTerminal };
