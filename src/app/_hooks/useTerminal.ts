@@ -1,10 +1,9 @@
 import { Terminal } from "xterm";
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams } from "next/navigation";
+import axios from "axios";
 
 type Props = {
   id: string;
-  isLoading: boolean;
-  data: UserInfo[] | undefined;
   rows?: number;
   cols?: number;
 };
@@ -13,6 +12,13 @@ type UserInfo = {
   id: string;
   name: string;
   is_new: true;
+};
+
+type AnswerStyle = {
+  id: string;
+  answer: string;
+  user_id: string;
+  theme_id: string;
 };
 
 const userInfo = [
@@ -64,16 +70,11 @@ const theme = [
   },
 ];
 
-export const useTerminal = ({
-  id,
-  isLoading,
-  data,
-  cols = 80,
-  rows = 50,
-}: Props) => {
+export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
   let userName = "";
+  let answer: AnswerStyle[];
 
   const createTerminal = (
     document: Document,
@@ -100,12 +101,12 @@ export const useTerminal = ({
     let isAnswerMode = false;
     let isChooseMode = false;
 
-    if (searchParams.get('name') === null) {
+    if (searchParams.get("name") === null) {
       term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
     } else {
-      term.write(`\r\n${searchParams.get('name')}さんからお題が届いています`);
+      term.write(`\r\n${searchParams.get("name")}さんからお題が届いています`);
       term.write(`\r\n英語で回答してください`);
-      term.write(`\r\nお題: ${searchParams.get('theme')}\r\n`);
+      term.write(`\r\nお題: ${searchParams.get("theme")}\r\n`);
       isAnswerMode = true;
     }
 
@@ -117,8 +118,8 @@ export const useTerminal = ({
         const text: string[] = command.split(" ", 2);
 
         if (isAnswerMode) {
-          term.write(`\r\n${searchParams.get('name')}さんの回答: ${command}`);
-          term.write(`\r\n${searchParams.get('name')}さんの回答を送信しました`);
+          term.write(`\r\n${searchParams.get("name")}さんの回答: ${command}`);
+          term.write(`\r\n${searchParams.get("name")}さんの回答を送信しました`);
           //TODO 回答を送信(api)
           // term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           term.write("\r\n次に回答するユーザーを1人以下から選んでください");
@@ -148,10 +149,13 @@ export const useTerminal = ({
         }
 
         if (text[0] === "cd") {
-          // TODO 全ユーザ取得(api) userInfo
-          if (!isLoading) {
-            const userIndex = data!.findIndex((value) => {
-              return value?.name === text[1];
+          const asyncLs = async () => {
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+            const endPoint = "users";
+            const res = await axios.get(baseURL + endPoint);
+            const data = res.data as UserInfo[];
+            const userIndex = data.findIndex((value) => {
+              return value.name === text[1];
             });
             if (userIndex !== -1 && currentDir === "\r\nhome ") {
               userName = text[1];
@@ -165,34 +169,51 @@ export const useTerminal = ({
               term.write(`\r\ncd: ${text[1]}: No such file or directory`);
               term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             }
-          } else {
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-          }
+          };
+          asyncLs();
         } else if (text[0] === "ls") {
-          // TODO 全ユーザ取得(api) userInfo
-          if (!isLoading) {
+          const asyncLs = async () => {
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+            const endPoint = "users";
+            const res = await axios.get(baseURL + endPoint);
+            const data = res.data;
             if (currentDir === "\r\nhome ") {
               term.write("\r\n");
-              data!.forEach((value) => {
-                term.write(`\x1B[92m${value?.name}\x1B[0m  `);
+              data.forEach((value: any) => {
+                term.write(`\x1B[92m${value.name}\x1B[0m  `);
               });
             } else {
               term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
             }
-          }
-          term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          };
+          asyncLs();
         } else if (text[0] === "cat") {
           // TODO あるユーザの回答を取得(api) userNameで指定
-          // TODO 回答毎にお題を取得(複数回 api)
+          const asyncLs = async () => {
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+            const endPoint = `answers?user_name=${userName}`;
+            const res = await axios.get(baseURL + endPoint);
+            answer = res.data;
+          };
+          asyncLs();
           if (text[1] !== "introduction.md" || currentDir === "\r\nhome ") {
             term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           } else {
             for (let i = 0; i < answer.length; i++) {
               // TODO answer[i].themeIdからお題を取得(api)
-              term.write(`\r\n \x1B[96m${theme[i].name}\x1B[0m`);
-              term.write(`\r\n \x1B[96m> ${answer[i].answer}\x1B[0m`);
-              term.write("\r\n");
+              const asyncLs = async () => {
+                const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+                const endPoint = `answers/${answer[i].theme_id}`;
+                const res = await axios.get(baseURL + endPoint);
+                const theme = res.data;
+                term.write(`\r\n \x1B[96m${theme[i].name}\x1B[0m`);
+                term.write(`\r\n \x1B[96m> ${answer[i].answer}\x1B[0m`);
+                term.write("\r\n");
+              };
+              asyncLs();
             }
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
