@@ -2,22 +2,29 @@ import { Terminal } from "xterm";
 
 type Props = {
   id: string;
+  data: UserInfo[];
   rows?: number;
   cols?: number;
 };
 
-const userInfo = [
-  {
-    id: "1000",
-    name: "kakinoki",
-    is_new: true,
-  },
-  {
-    id: "2000",
-    name: "kanta",
-    is_new: true,
-  },
-];
+type UserInfo = {
+  id: string;
+  name: string;
+  is_new: true;
+};
+
+// const userInfo = [
+//   {
+//     id: "1000",
+//     name: "kakinoki",
+//     is_new: true,
+//   },
+//   {
+//     id: "2000",
+//     name: "kanta",
+//     is_new: true,
+//   },
+// ];
 
 const answer = [
   {
@@ -55,7 +62,7 @@ const theme = [
   },
 ];
 
-export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
+export const useTerminal = ({ id, data, cols = 80, rows = 50 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
   let userName = "";
@@ -83,12 +90,13 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
     term.onKey((e: { key: string; domEvent: KeyboardEvent }) => {
       const ev = e.domEvent;
       const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
+      console.log(data);
 
       if (ev.key === "Enter") {
         const text: string[] = command.split(" ", 2);
         if (text[0] === "cd") {
           // TODO 全ユーザ取得(api) userInfo
-          const userIndex = userInfo.findIndex((value) => {
+          const userIndex = data.findIndex((value) => {
             return value.name === text[1];
           });
           if (userIndex !== -1 && currentDir === "\r\nhome ") {
@@ -107,7 +115,7 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
           // TODO 全ユーザ取得(api) userInfo
           if (currentDir === "\r\nhome ") {
             term.write("\r\n");
-            userInfo.forEach((value) => {
+            data.forEach((value) => {
               term.write(`\x1B[92m${value.name}\x1B[0m  `);
             });
           } else {

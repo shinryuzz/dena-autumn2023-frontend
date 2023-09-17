@@ -1,9 +1,12 @@
 import { FC, useEffect } from "react";
 import { useTerminal } from "../_hooks/useTerminal";
+import { useGetUser } from "../_hooks/useGetUser";
 
 const TerminalWrapeer: FC = () => {
   const id = "terminal";
-  const { setup } = useTerminal({ id });
+  const { isError, isLoading, data, error } = useGetUser();
+  console.log(data);
+  const { setup } = useTerminal({ id, data });
 
   useEffect(() => {
     setup(document);
