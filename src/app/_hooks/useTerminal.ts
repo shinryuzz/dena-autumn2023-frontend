@@ -1,10 +1,10 @@
 import { Terminal } from "xterm";
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams } from "next/navigation";
+import axios from "axios";
+import { getAllUsers } from "@/utils/request";
 
 type Props = {
   id: string;
-  isLoading: boolean;
-  data: UserInfo[] | undefined;
   rows?: number;
   cols?: number;
 };
@@ -64,13 +64,7 @@ const theme = [
   },
 ];
 
-export const useTerminal = ({
-  id,
-  isLoading,
-  data,
-  cols = 80,
-  rows = 50,
-}: Props) => {
+export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
   let userName = "";
@@ -100,12 +94,12 @@ export const useTerminal = ({
     let isAnswerMode = false;
     let isChooseMode = false;
 
-    if (searchParams.get('name') === null) {
+    if (searchParams.get("name") === null) {
       term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
     } else {
-      term.write(`\r\n${searchParams.get('name')}さんからお題が届いています`);
+      term.write(`\r\n${searchParams.get("name")}さんからお題が届いています`);
       term.write(`\r\n英語で回答してください`);
-      term.write(`\r\nお題: ${searchParams.get('theme')}\r\n`);
+      term.write(`\r\nお題: ${searchParams.get("theme")}\r\n`);
       isAnswerMode = true;
     }
 
@@ -117,8 +111,8 @@ export const useTerminal = ({
         const text: string[] = command.split(" ", 2);
 
         if (isAnswerMode) {
-          term.write(`\r\n${searchParams.get('name')}さんの回答: ${command}`);
-          term.write(`\r\n${searchParams.get('name')}さんの回答を送信しました`);
+          term.write(`\r\n${searchParams.get("name")}さんの回答: ${command}`);
+          term.write(`\r\n${searchParams.get("name")}さんの回答を送信しました`);
           //TODO 回答を送信(api)
           // term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           term.write("\r\n次に回答するユーザーを1人以下から選んでください");
@@ -149,37 +143,42 @@ export const useTerminal = ({
 
         if (text[0] === "cd") {
           // TODO 全ユーザ取得(api) userInfo
-          if (!isLoading) {
-            const userIndex = data!.findIndex((value) => {
-              return value?.name === text[1];
-            });
-            if (userIndex !== -1 && currentDir === "\r\nhome ") {
-              userName = text[1];
-              currentDir = `${currentDir}${text[1]} `;
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
-              userName = "";
-              currentDir = "\r\nhome ";
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            } else {
-              term.write(`\r\ncd: ${text[1]}: No such file or directory`);
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            }
+          const userIndex = data!.findIndex((value) => {
+            return value?.name === text[1];
+          });
+          if (userIndex !== -1 && currentDir === "\r\nhome ") {
+            userName = text[1];
+            currentDir = `${currentDir}${text[1]} `;
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          } else if (text[1] === ".." && currentDir !== "\r\nhome ") {
+            userName = "";
+            currentDir = "\r\nhome ";
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           } else {
+            term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           }
         } else if (text[0] === "ls") {
           // TODO 全ユーザ取得(api) userInfo
-          if (!isLoading) {
-            if (currentDir === "\r\nhome ") {
-              term.write("\r\n");
-              data!.forEach((value) => {
-                term.write(`\x1B[92m${value?.name}\x1B[0m  `);
-              });
-            } else {
-              term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
-            }
+          if (currentDir === "\r\nhome ") {
+            const asyncLs = async () => {
+              const data: any = await getAllUsers();
+              if (currentDir === "\r\nhome ") {
+                term.write("\r\n");
+                data?.forEach((value: any) => {
+                  term.write(`\x1B[92m${value?.Name}\x1B[0m  `);
+                });
+              } else {
+                term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
+              }
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            };
+
+            asyncLs();
+          } else {
+            term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
           }
+
           term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
         } else if (text[0] === "cat") {
           // TODO あるユーザの回答を取得(api) userNameで指定
