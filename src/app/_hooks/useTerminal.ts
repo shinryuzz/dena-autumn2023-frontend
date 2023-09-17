@@ -27,55 +27,6 @@ type AnswerStyle = {
   theme_id: string;
 };
 
-const userInfo = [
-  {
-    id: "1000",
-    name: "kakinoki",
-    is_new: true,
-  },
-  {
-    id: "2000",
-    name: "kanta",
-    is_new: true,
-  },
-];
-
-const answer = [
-  {
-    id: "1",
-    answer: "vscode",
-    userId: "1000",
-    themeId: "100",
-  },
-  {
-    id: "2",
-    answer: "C++",
-    userId: "1000",
-    themeId: "200",
-  },
-  {
-    id: "3",
-    answer: "ゲーム、スポーツ観戦",
-    userId: "1000",
-    themeId: "300",
-  },
-];
-
-const theme = [
-  {
-    id: "100",
-    name: "好きなエディタは？",
-  },
-  {
-    id: "200",
-    name: "好きな言語は？",
-  },
-  {
-    id: "300",
-    name: "趣味は？",
-  },
-];
-
 export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
   let command: string = "";
   let currentDir = "\r\nhome ";
@@ -114,14 +65,15 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
     let isChooseMode = false;
 
     const questioner = searchParams.get("from_user_name");
+    const themeId = searchParams?.get("theme_id");
 
-    if (questioner === null) {
+    if (questioner === null || themeId === null) {
       term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
     } else {
       term.write(`\r\n${questioner}さんからお題が届いています`);
       term.write(`\r\n英語で回答してください`);
 
-      const asyncLs = async ({ themeId = 1 }: { themeId: number }) => {
+      const asyncLs = async ({ themeId }: { themeId: string }) => {
         const data: any = await getTheme({ themeId });
         if (currentDir === "\r\nhome ") {
           term.write("\r\n");
@@ -136,8 +88,7 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
       const theme = searchParams.get("theme_name");
       term.write(`\r\nお題: ${theme}\r\n`);
 
-      const themeId = 1;
-      // asyncLs({ themeId });
+      asyncLs({ themeId });
 
       term.write("\r\n");
 
