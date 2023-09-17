@@ -6,6 +6,7 @@ import { useTerminal } from "../_hooks/useTerminal";
 const TerminalWrapeer: FC = () => {
   const id = "terminal";
   const { setup } = useTerminal({ id });
+  // console.log(data);
 
   useEffect(() => {
     setup(document);

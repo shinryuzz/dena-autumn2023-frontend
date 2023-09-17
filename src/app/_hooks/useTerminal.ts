@@ -6,12 +6,60 @@ import {
   notifySlack,
   postAnswer,
 } from "@/utils/request";
+import axios from "axios";
 
 type Props = {
   id: string;
   rows?: number;
   cols?: number;
 };
+
+type UserInfo = {
+  id: string;
+  name: string;
+  is_new: true;
+};
+
+type AnswerStyle = {
+  id: string;
+  content: string;
+  user_id: string;
+  theme_id: string;
+};
+
+const userInfo = [
+  {
+    id: "1000",
+    name: "kakinoki",
+    is_new: true,
+  },
+  {
+    id: "2000",
+    name: "kanta",
+    is_new: true,
+  },
+];
+
+const answer = [
+  {
+    id: "1",
+    answer: "vscode",
+    userId: "1000",
+    themeId: "100",
+  },
+  {
+    id: "2",
+    answer: "C++",
+    userId: "1000",
+    themeId: "200",
+  },
+  {
+    id: "3",
+    answer: "ゲーム、スポーツ観戦",
+    userId: "1000",
+    themeId: "300",
+  },
+];
 
 const theme = [
   {
@@ -37,6 +85,8 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
     userName: "",
     content: "",
   };
+  let userName = "";
+  let answer: AnswerStyle[];
 
   const createTerminal = (
     document: Document,
@@ -162,11 +212,13 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
         }
 
         if (text[0] === "cd") {
-          // TODO 全ユーザ取得(api) userInfo
           const asyncLs = async () => {
-            const data: any = await getAllUsers();
-            const userIndex = data!.findIndex((value: any) => {
-              return value?.name === text[1];
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+            const endPoint = "users";
+            const res = await axios.get(baseURL + endPoint);
+            const data = res.data as UserInfo[];
+            const userIndex = data.findIndex((value) => {
+              return value.name === text[1];
             });
             if (userIndex !== -1 && currentDir === "\r\nhome ") {
               userName = text[1];
@@ -180,53 +232,48 @@ export const useTerminal = ({ id, cols = 80, rows = 50 }: Props) => {
               term.write(`\r\ncd: ${text[1]}: No such file or directory`);
               term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
             }
-            // if (currentDir === "\r\nhome ") {
-            //   term.write("\r\n");
-            //   data?.forEach((value: any) => {
-            //     term.write(`\x1B[92m${value?.Name}\x1B[0m  `);
-            //   });
-            // } else {
-            //   term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
-            // }
-            // term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            asyncLs();
+
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           };
+          asyncLs();
         } else if (text[0] === "ls") {
-          // TODO 全ユーザ取得(api) userInfo
-          if (currentDir === "\r\nhome ") {
-            const asyncLs = async () => {
-              const data: any = await getAllUsers();
-              if (currentDir === "\r\nhome ") {
-                term.write("\r\n");
-                data?.forEach((value: any) => {
-                  term.write(`\x1B[92m${value?.Name}\x1B[0m  `);
-                });
-              } else {
-                term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
-              }
-              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
-            };
-
-            asyncLs();
-          } else {
-            term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
-          }
-
-          term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          const asyncLs = async () => {
+            const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+            const endPoint = "users";
+            const res = await axios.get(baseURL + endPoint);
+            const data = res.data;
+            if (currentDir === "\r\nhome ") {
+              term.write("\r\n");
+              data.forEach((value: any) => {
+                term.write(`\x1B[92m${value.name}\x1B[0m  `);
+              });
+            } else {
+              term.write("\r\n\x1B[92mintroduction.md\x1B[0m");
+            }
+            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+          };
+          asyncLs();
         } else if (text[0] === "cat") {
-          // TODO あるユーザの回答を取得(api) userNameで指定
-          // TODO 回答毎にお題を取得(複数回 api)
           if (text[1] !== "introduction.md" || currentDir === "\r\nhome ") {
             term.write(`\r\ncd: ${text[1]}: No such file or directory`);
             term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
           } else {
-            for (let i = 0; i < answer.length; i++) {
-              // TODO answer[i].themeIdからお題を取得(api)
-              term.write(`\r\n \x1B[96m${theme[i].name}\x1B[0m`);
-              term.write(`\r\n \x1B[96m> ${answer[i].answer}\x1B[0m`);
-              term.write("\r\n");
-            }
-            term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            const asyncCat = async () => {
+              const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+              const endPoint = `answers?user_name=${userName}`;
+              const res = await axios.get(baseURL + endPoint);
+              answer = res.data;
+              for (let i = 0; i < answer.length; i++) {
+                const endPoint = `theme/${answer[i].theme_id}`;
+                const res = await axios.get(baseURL + endPoint);
+                const theme = res.data;
+                term.write(`\r\n \x1B[96m${theme.name}\x1B[0m`);
+                term.write(`\r\n \x1B[96m> ${answer[i].content}\x1B[0m`);
+                term.write("\r\n");
+              }
+              term.write(`\x1B[93m${currentDir}\x1B[0m$ `);
+            };
+            asyncCat();
           }
         } else if (text[0] === "help") {
           term.write("\r\nCommand list");
