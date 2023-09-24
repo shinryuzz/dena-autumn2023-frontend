@@ -44,27 +44,23 @@ export const notifySlack = async ({
 }) => {
   const baseURL = process.env.NEXT_PUBLIC_SLACK_WEBHOOK_URL as string;
 
-  await fetch(
-    // baseURL,
-    "https://hooks.slack.com/services/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",
-    {
-      method: "post",
-      body: JSON.stringify({
-        text:
-          `${
-            "https://dena-autumn2023-frontend.vercel.app/" +
-            "?from_user_name=" +
-            params.from +
-            "&to_user_name=" +
-            params.to
-          }` +
-          "&theme_id=" +
-          params.themeId +
-          "&theme_name=" +
-          params.themeName,
-      }),
-    }
-  ).then((x) => {
+  await fetch(baseURL, {
+    method: "post",
+    body: JSON.stringify({
+      text:
+        `${
+          "https://dena-autumn2023-frontend.vercel.app/" +
+          "?from_user_name=" +
+          params.from +
+          "&to_user_name=" +
+          params.to
+        }` +
+        "&theme_id=" +
+        params.themeId +
+        "&theme_name=" +
+        params.themeName,
+    }),
+  }).then((x) => {
     console.log(x);
   });
 };
